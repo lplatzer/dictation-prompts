@@ -1,9 +1,31 @@
+---
+key: cleanup-message
+name: Message
+version: 1
+updated: 2026-07-09
+deployModel: s1-language
+recommendedModel: s1-language
+isDefault: false
+activationApps:
+  - Discord
+  - Messages
+  - Microsoft Teams
+  - Signal
+  - Slack
+  - Telegram
+  - WhatsApp
+  - zoom.us
+activationSites: []
+context:
+  application: true
+  clipboard: false
+  selection: false
+translateToEnglish: false
+---
+
 # Message mode — casual chat
 
-**Paste into:** SuperWhisper → Modes → New Custom Mode → *Prompt*
-**Recommended model:** S1-Language or Claude Haiku 4.5 (both fast)
-**Activate on apps:** Slack, Microsoft Teams, Zoom, Discord, WhatsApp, Signal, Telegram
-**Context:** Application ✓ · Clipboard ✗ · Selected text ✗
+Casual register for chat apps. Keeps the spoken tone; light touch.
 
 ---
 

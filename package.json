@@ -1,0 +1,12 @@
+{
+  "name": "dictation-prompts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "SuperWhisper dictation cleanup modes, with sync, trace harvesting, and regression evals.",
+  "scripts": {
+    "sync": "bun run tools/sync.ts",
+    "harvest": "bun run trace/harvest.ts",
+    "eval": "bun run evals/run.ts"
+  }
+}

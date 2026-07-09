@@ -1,11 +1,29 @@
+---
+key: cleanup-email
+name: Email
+version: 1
+updated: 2026-07-09
+deployModel: s1-language
+recommendedModel: haiku-4.5
+isDefault: false
+activationApps:
+  - Microsoft Outlook
+  - Mail
+  - Spark
+  - Thunderbird
+activationSites: []
+context:
+  application: true
+  clipboard: true
+  selection: false
+translateToEnglish: false
+---
+
 # Email mode — professional
 
-**Paste into:** SuperWhisper → Modes → New Custom Mode → *Prompt*
-**Recommended model:** Claude Haiku 4.5 (fast) — or Claude Sonnet 4.5 if you want maximum polish
-**Activate on apps:** Microsoft Outlook, Apple Mail, Spark, Thunderbird
-**Context:** Application ✓ · Clipboard ✓ *(picks up quoted text when replying)* · Selected text ✗
+Professional register, no greeting/sign-off (you type those). Clipboard on so replies can see quoted text.
 
-> Note: webmail (Outlook web / Gmail in a browser) won't auto-trigger this — SuperWhisper activates by app, and a browser is just the browser. That case is handled by `browser.md`.
+> Webmail in a browser won't auto-trigger this — SuperWhisper activates by app, and a browser is just the browser. That case is handled by `browser.md` (or add `activationSites` here — see README).
 
 ---
 

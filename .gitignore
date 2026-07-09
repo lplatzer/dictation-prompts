@@ -1,1 +1,11 @@
 .DS_Store
+node_modules/
+
+# Build output of tools/sync.ts
+dist/
+
+# Contains real dictation content — never commit
+trace/traces.jsonl
+
+# Eval run outputs (may quote real prompts/outputs)
+evals/runs/

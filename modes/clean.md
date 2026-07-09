@@ -1,9 +1,23 @@
+---
+key: cleanup-clean
+name: Clean
+version: 1
+updated: 2026-07-09
+deployModel: s1-language
+recommendedModel: s1-language
+isDefault: true
+activationApps: []
+activationSites: []
+context:
+  application: true
+  clipboard: false
+  selection: false
+translateToEnglish: false
+---
+
 # Clean mode — default / fallback
 
-**Paste into:** SuperWhisper → Modes → New Custom Mode → *Prompt*
-**Recommended model:** S1-Language (fast, private, task-tuned) — or local Llama 3 8B for fully offline
-**Activate on apps:** set as your **default** mode (fires when no other mode matches)
-**Context:** Application ✓ · Clipboard ✗ · Selected text ✗ *(keep it lean — this is your highest-frequency mode)*
+Your highest-frequency mode: strip fillers, fix punctuation, no restructuring. Set as your **default** so it fires when no other mode matches. Kept lean on purpose.
 
 ---
 

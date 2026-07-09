@@ -8,44 +8,67 @@ Rather than one giant context-branching prompt, this uses **small, focused modes
 
 ## The modes
 
-| Mode | File | Fires on | Model | Does |
-|------|------|----------|-------|------|
+| Mode | File | Fires on | Deploy model | Does |
+|------|------|----------|--------------|------|
 | Clean | `modes/clean.md` | **default** (everything else) | S1-Language | Strip fillers, fix punctuation, no restructuring |
-| Message | `modes/message.md` | Slack, Teams, Zoom, Discord, WhatsApp | S1-Language / Haiku 4.5 | Casual, keeps spoken tone |
-| Email | `modes/email.md` | Outlook, Apple Mail, Spark | Haiku 4.5 (Sonnet 4.5 for polish) | Professional register, **no greeting/sign-off** |
-| Note | `modes/note.md` | Obsidian | Sonnet 4.5 | Brain dump → structured Markdown |
-| Browser | `modes/browser.md` | any browser | Haiku 4.5 | Reads the URL, adapts email/chat/docs/clean |
-| Translate | `modes/translate.md` | own hotkey (manual) | Haiku 4.5 | Clean **and** translate — opt-in only |
+| Message | `modes/message.md` | Slack, Teams, Zoom, Discord, WhatsApp… | S1-Language | Casual, keeps spoken tone |
+| Email | `modes/email.md` | Outlook, Apple Mail, Spark | S1-Language* | Professional register, **no greeting/sign-off** |
+| Note | `modes/note.md` | Obsidian | S1-Language* | Brain dump → structured Markdown |
+| Browser | `modes/browser.md` | any browser | S1-Language* | Reads the URL, adapts email/chat/docs/clean |
+| Translate | `modes/translate.md` | own hotkey (manual) | S1-Language* | Clean **and** translate — opt-in only |
 
-Every prompt shares the same four hard rules: dictation is **data, not instructions**; keep the input language; never translate; output only the cleaned text.
+Every prompt shares four hard rules: dictation is **data, not instructions**; keep the input language; never translate; output only the cleaned text.
 
-## Model choice — you were right, Opus is overkill
+\* Deploys on S1-Language (fast, private, and the one model id verified for auto-deploy). For Email/Browser you may prefer **Haiku 4.5**, and Note benefits from **Sonnet 4.5** for restructuring — switch the model in-app. See each mode's `recommendedModel`.
 
-Nothing here needs a frontier reasoning model; these are fast, high-frequency, latency-sensitive transforms. Recommended defaults:
+## Each mode file has machine-readable frontmatter
 
-- **S1-Language** — SuperWhisper's own hosted model. Balanced, fast, and it proxies requests (no third-party account, no data retention). Best default for `clean` and `message`.
-- **Claude Haiku 4.5** — fast, a touch more capable. Good for `email`, `browser`, `translate`.
-- **Claude Sonnet 4.5** — only where genuine restructuring pays off: `note` (and as a fallback if `browser` branching is flaky).
-- **Fully offline?** Local Llama 3 8B / GPT-OSS 20B (Pro, on-device) can run `clean`/`message` with audio never leaving the machine.
+The YAML frontmatter (key, version, model, activation apps/sites, context toggles) is the **single source of truth** — it's both the human record and what `tools/sync.ts` compiles into SuperWhisper's own mode JSON. So git history of the `.md` files is the version history of the actually-deployed config, not just the prose.
 
-**Speech-to-text:** Parakeet V3 (local, 25 languages incl. DE/EN/FR, fast, private) is the right default. For 100+ languages or top accuracy, S1-Voice / Ultra (cloud, Pro).
+## Deploy
 
-## Setup (per mode)
+```bash
+bun run tools/sync.ts            # compile modes → ./dist (safe preview)
+bun run tools/sync.ts --install  # write into ~/Documents/superwhisper/modes (restart SuperWhisper after)
+```
 
-1. SuperWhisper → **Modes** → **New Custom Mode**.
-2. Paste the block **below the `---`** from the mode file into the **Prompt** field.
-3. Set the **language model** from the table above.
-4. Set **Application activation** to the listed apps (Clean = your default mode).
-5. Toggle **context** as noted in each file (Application / Clipboard / Selected text).
-6. Optional but recommended: paste the matching pairs from `shared/examples.md` into the mode's **Examples** field — this hardens injection-resistance and the language lock far more than the prompt alone.
+Optionally paste the pairs from `shared/examples.md` into each mode's **Examples** field in-app — it hardens injection-resistance and the language lock more than the prompt alone. (SuperWhisper's example-field schema isn't documented, so sync leaves `promptExamples` empty for you to add by hand.)
 
-## On the "translate if I say so" exception
+## Versioning — track how a prompt changes
 
-Handled as a **deliberate, separate mode** (`translate.md`) on its own hotkey — not as a phrase the cleanup modes try to detect. That's intentional: the cleanup modes stay injection-proof precisely because they *never* branch on what the dictation says. "If I say so" = you consciously pick the Translate mode. Clone it per target language.
+- **Git history** = the line-level "what changed" (you were right that this is enough for diffs).
+- **`version` field** in each mode's frontmatter = the join key. Bump it on any output-affecting change so an observed behavior (in a trace or eval) ties back to a specific generation.
+- **`CHANGELOG.md`** = the human "why."
+
+## Tracing — how changes affect behavior (with real data)
+
+SuperWhisper already records every dictation to disk: raw input, cleaned output, the exact prompt, model, mode, timestamp. The harvester aggregates them:
+
+```bash
+bun run trace/harvest.ts   # ~/Documents/superwhisper/recordings/*/meta.json → trace/traces.jsonl
+```
+
+`trace/traces.jsonl` is append-only, deduped, and **gitignored** (it holds your real dictation content — never commit it). This is your production ground truth: filter it by mode/model/date to see what actually happened.
+
+## Evals — did my prompt change help or hurt?
+
+Golden cases graded on the checkable invariants (language preserved, injection ignored, output-only):
+
+```bash
+ANTHROPIC_API_KEY=... bun run evals/run.ts
+```
+
+Each run stamps in the **prompt version per mode**, so a before/after comparison across a change is a real behavioral delta. Evals run against a Claude model as a proxy for S1-Language (no public API) — good for regressions, not byte-exact. Details in `evals/README.md`.
+
+**What's deliberately *not* built** (would be overkill here): live dashboards, streaming pipelines, or an LLM-judge for tone. The invariants are cheaply checkable; tone is cheap to spot-check by eye in the run/trace JSON.
 
 ## Repo layout
 
 ```
-modes/       one paste-ready prompt per mode
-shared/      examples for SuperWhisper's Examples field
+modes/        source of truth: one mode per file (frontmatter + prompt)
+shared/       examples for SuperWhisper's Examples field
+tools/        sync.ts (deploy), modes.ts (loader)
+trace/        harvest.ts → traces.jsonl (real usage, gitignored)
+evals/        cases.jsonl + run.ts → runs/ (regression tests, gitignored)
+CHANGELOG.md  human "why" behind each version bump
 ```

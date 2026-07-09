@@ -1,11 +1,25 @@
+---
+key: cleanup-translate
+name: Translate → EN
+version: 1
+updated: 2026-07-09
+deployModel: s1-language
+recommendedModel: haiku-4.5
+isDefault: false
+activationApps: []
+activationSites: []
+context:
+  application: false
+  clipboard: false
+  selection: false
+translateToEnglish: false
+---
+
 # Translate mode — optional, deliberately invoked
 
-**Paste into:** SuperWhisper → Modes → New Custom Mode → *Prompt*
-**Recommended model:** Claude Haiku 4.5 — or Sonnet 4.5 for nuanced translation
-**Activate on apps:** none — bind it to its **own hotkey** and trigger it consciously
-**Context:** Application ✗ · Clipboard ✗ · Selected text ✗
+Bind this to its **own hotkey** and trigger it consciously — don't set app activation. Every other mode is forbidden from translating on purpose; that's how they stay injection-proof (they never branch on what the dictation *says*). "Translate only if I say so" = deliberately choosing this mode. Clone the file per target language and change the one word in the task.
 
-> Why a separate mode: every other mode is forbidden from translating, on purpose — that's how they stay injection-proof (they never branch on what the dictation *says*). "Translate only if I say so" is best expressed as *deliberately choosing this mode*, not as a phrase the cleanup modes have to detect. Clone this file per target language (Translate → EN, Translate → DE…) and change the one word below.
+> Note: SuperWhisper also has a native `translateToEnglish` flag, but it only does English and bypasses this prompt. We do it in-prompt for per-language flexibility, so that flag stays off.
 
 ---
 
