@@ -9,11 +9,11 @@
 // S1-Language (which has no public API). Good for regression signal on invariants,
 // not a byte-exact match of production behavior.
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 import { loadModeByKey } from "../tools/modes.ts";
+import { moduleDir } from "../tools/paths.ts";
 
-const HERE = dirname(fileURLToPath(import.meta.url));
+const HERE = moduleDir(import.meta.url);
 const DEFAULT_MODEL = "claude-haiku-4-5-20251001";
 
 interface Case {
@@ -93,6 +93,7 @@ async function clean(systemPrompt: string, input: string, model: string): Promis
 
 // --- main --------------------------------------------------------------------
 
+export async function main() {
 if (!process.env.ANTHROPIC_API_KEY) {
   console.error("Set ANTHROPIC_API_KEY to run evals (they make live API calls).");
   process.exit(1);
@@ -140,3 +141,6 @@ writeFileSync(outPath, JSON.stringify(run, null, 2) + "\n");
 
 console.log(`\n${passed}/${cases.length} passed · model ${model}`);
 console.log(`-> ${outPath}`);
+}
+
+if (import.meta.main) main();

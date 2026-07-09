@@ -10,4 +10,6 @@ Human-readable "why" behind each prompt change. Git history is the "what" (line-
 
 ## Log
 
+- 2026-07-09 — coding v1, code-gen v1 — added a coding-cleanup mode (IDEs + terminals, preserves identifiers) and a spoken-description→code mode (the deliberate injection exception) — cover dictating to coding agents and generating code.
+- 2026-07-09 — tooling — cross-OS path resolver (macOS/Windows + SUPERWHISPER_DIR), single `cli.ts` compiling to a standalone executable, and an OTLP exporter (`trace/export.ts`) for Langfuse/Phoenix/Braintrust/LangSmith.
 - 2026-07-09 — all modes v1 — initial set: clean, message, email, note, browser, translate — first cut of the SuperWhisper cleanup modes.

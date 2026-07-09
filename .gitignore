@@ -6,6 +6,7 @@ dist/
 
 # Contains real dictation content — never commit
 trace/traces.jsonl
+trace/otlp-payload.json
 
 # Eval run outputs (may quote real prompts/outputs)
 evals/runs/

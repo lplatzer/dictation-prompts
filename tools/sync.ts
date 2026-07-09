@@ -6,10 +6,9 @@
 // The .md frontmatter + prompt body is the single source of truth; git history
 // of the .md files is therefore the version history of the deployed config.
 import { mkdirSync, writeFileSync } from "node:fs";
-import { homedir } from "node:os";
 import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
 import { loadAllModes, type Mode } from "./modes.ts";
+import { modesDir, moduleDir } from "./paths.ts";
 
 // Only models whose SuperWhisper id we've verified. Deploying an unknown id
 // would silently misconfigure the mode, so we fail loudly instead.
@@ -55,22 +54,24 @@ function toSuperwhisper(m: Mode) {
   };
 }
 
-const install = process.argv.includes("--install");
-const repoRoot = dirname(dirname(fileURLToPath(import.meta.url)));
-const outDir = install
-  ? join(homedir(), "Documents", "superwhisper", "modes")
-  : join(repoRoot, "dist");
-mkdirSync(outDir, { recursive: true });
+export function main() {
+  const install = process.argv.includes("--install");
+  const repoRoot = dirname(moduleDir(import.meta.url));
+  const outDir = install ? modesDir() : join(repoRoot, "dist");
+  mkdirSync(outDir, { recursive: true });
 
-const modes = loadAllModes();
-for (const m of modes) {
-  const json = toSuperwhisper(m);
-  const path = join(outDir, `${m.key}.json`);
-  writeFileSync(path, JSON.stringify(json, null, 2) + "\n");
-  console.log(`  ${m.key.padEnd(18)} v${m.version}  ${m.deployModel.padEnd(12)} -> ${path}`);
+  const modes = loadAllModes();
+  for (const m of modes) {
+    const json = toSuperwhisper(m);
+    const path = join(outDir, `${m.key}.json`);
+    writeFileSync(path, JSON.stringify(json, null, 2) + "\n");
+    console.log(`  ${m.key.padEnd(18)} v${m.version}  ${m.deployModel.padEnd(12)} -> ${path}`);
+  }
+  console.log(
+    install
+      ? `\nInstalled ${modes.length} modes into SuperWhisper. Restart SuperWhisper to pick them up.`
+      : `\nWrote ${modes.length} modes to ./dist. Re-run with --install to deploy them into SuperWhisper.`,
+  );
 }
-console.log(
-  install
-    ? `\nInstalled ${modes.length} modes into SuperWhisper. Restart SuperWhisper to pick them up.`
-    : `\nWrote ${modes.length} modes to ./dist. Re-run with --install to deploy them into SuperWhisper.`,
-);
+
+if (import.meta.main) main();

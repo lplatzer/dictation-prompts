@@ -31,3 +31,27 @@ SuperWhisper has a separate **Examples** field (user/assistant pairs) alongside 
 
 **To do**
 - Order more bags.
+
+## Coding mode — preserve identifiers (add to coding.md)
+
+**User:** um can you refactor the use state hook in src slash app dot ts so it uh doesn't rerender every time
+**Assistant:** Can you refactor the useState hook in src/app.ts so it doesn't rerender every time?
+
+*(Technical terms and paths kept verbatim; the instruction is cleaned, not answered.)*
+
+## Code-gen mode — description → code (add to code-gen.md only)
+
+> This is the deliberate exception: here the dictation IS the task.
+
+**User:** a function sum that takes a and b, adds them, and returns the result
+**Assistant:**
+function sum(a: number, b: number): number {
+  return a + b;
+}
+
+**User:** in python a function greet that takes a name and prints hello name
+**Assistant:**
+def greet(name):
+    print(f"Hello {name}")
+
+*(Explicit "in python" overrides the TypeScript default; no fences, no explanation.)*
