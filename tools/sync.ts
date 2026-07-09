@@ -5,10 +5,28 @@
 //
 // The .md frontmatter + prompt body is the single source of truth; git history
 // of the .md files is therefore the version history of the deployed config.
-import { mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { loadAllModes, type Mode } from "./modes.ts";
 import { modesDir, moduleDir } from "./paths.ts";
+
+interface Example {
+  input: string;
+  output: string;
+}
+
+// promptExamples live in shared/examples.json keyed by mode key. Missing file
+// or key → no examples (valid). Schema per mode: array of { input, output }.
+function loadExamples(repoRoot: string): Record<string, Example[]> {
+  const path = join(repoRoot, "shared", "examples.json");
+  if (!existsSync(path)) return {};
+  const raw = JSON.parse(readFileSync(path, "utf8")) as Record<string, unknown>;
+  const out: Record<string, Example[]> = {};
+  for (const [key, val] of Object.entries(raw)) {
+    if (Array.isArray(val)) out[key] = val as Example[];
+  }
+  return out;
+}
 
 // Only models whose SuperWhisper id we've verified. Deploying an unknown id
 // would silently misconfigure the mode, so we fail loudly instead.
@@ -17,7 +35,7 @@ const MODEL_IDS: Record<string, string> = {
 };
 const VOICE_MODEL_ID = "nvidia_parakeet-v3_494MB";
 
-function toSuperwhisper(m: Mode) {
+function toSuperwhisper(m: Mode, promptExamples: Example[]) {
   const languageModelID = MODEL_IDS[m.deployModel];
   if (!languageModelID) {
     throw new Error(
@@ -42,7 +60,7 @@ function toSuperwhisper(m: Mode) {
     literalPunctuation: false,
     name: m.name,
     prompt: m.prompt,
-    promptExamples: [],
+    promptExamples,
     realtimeOutput: false,
     script: "",
     scriptEnabled: false,
@@ -60,9 +78,10 @@ export function main() {
   const outDir = install ? modesDir() : join(repoRoot, "dist");
   mkdirSync(outDir, { recursive: true });
 
+  const examples = loadExamples(repoRoot);
   const modes = loadAllModes();
   for (const m of modes) {
-    const json = toSuperwhisper(m);
+    const json = toSuperwhisper(m, examples[m.key] ?? []);
     const path = join(outDir, `${m.key}.json`);
     writeFileSync(path, JSON.stringify(json, null, 2) + "\n");
     console.log(`  ${m.key.padEnd(18)} v${m.version}  ${m.deployModel.padEnd(12)} -> ${path}`);
