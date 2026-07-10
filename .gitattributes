@@ -1,0 +1,3 @@
+# Force LF on all platforms. The mode-file frontmatter parser and the shell
+# expect LF; CRLF from a Windows checkout previously broke `sync` (m.key undefined).
+* text=auto eol=lf

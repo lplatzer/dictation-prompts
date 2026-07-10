@@ -2,7 +2,7 @@
 // frontmatter used in modes/*.md and returns the prompt body (the block below
 // the final `---`). Zero deps on purpose — the frontmatter shape is fixed.
 import { readdirSync, readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 export interface ModeContext {
@@ -79,11 +79,16 @@ function parseFrontmatter(fm: string): Record<string, any> {
 }
 
 export function loadMode(file: string): Mode {
-  const text = readFileSync(file, "utf8");
-  const parts = text.split(/^---\s*$/m);
-  // parts[0]="" , parts[1]=frontmatter, parts[2..]=doc; prompt is the last chunk
-  const fm = parseFrontmatter(parts[1] ?? "");
-  const prompt = (parts[parts.length - 1] ?? "").trim();
+  // Normalize Windows quirks: strip a UTF-8 BOM and convert CRLF/CR → LF, so
+  // the frontmatter regex below anchors correctly regardless of git eol settings.
+  const text = readFileSync(file, "utf8").replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n");
+  const block = text.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+  if (!block) throw new Error(`Mode ${file}: missing or malformed frontmatter block`);
+  const fm = parseFrontmatter(block[1]);
+  if (!fm.key) throw new Error(`Mode ${file}: frontmatter is missing "key"`);
+  // The prompt is the last chunk of the doc, after the human header's `---`.
+  const bodyParts = block[2].split(/^---\s*$/m);
+  const prompt = (bodyParts[bodyParts.length - 1] ?? "").trim();
   return {
     key: fm.key,
     name: fm.name,
@@ -112,7 +117,7 @@ export function loadAllModes(): Mode[] {
 }
 
 export function loadModeByKey(key: string): Mode {
-  const m = loadAllModes().find((x) => x.key === key || x.file.endsWith(`/${key}.md`));
+  const m = loadAllModes().find((x) => x.key === key || basename(x.file) === `${key}.md`);
   if (!m) throw new Error(`No mode with key or file "${key}"`);
   return m;
 }
