@@ -24,6 +24,7 @@ export function superwhisperDir(): string {
 
 export const modesDir = () => join(superwhisperDir(), "modes");
 export const recordingsDir = () => join(superwhisperDir(), "recordings");
+export const settingsFile = () => join(superwhisperDir(), "settings", "settings.json");
 
 // True when running inside a `bun build --compile` standalone binary, where
 // module files live in a virtual FS and there is no repo checkout.

@@ -1,32 +1,19 @@
 // sync.ts — compile modes/*.md into SuperWhisper mode JSON.
 //
 //   bun run tools/sync.ts            # write to ./dist (safe, default)
-//   bun run tools/sync.ts --install  # write to ~/Documents/superwhisper/modes (live)
+//   bun run tools/sync.ts --install  # write into SuperWhisper + register the modes
 //
 // The .md frontmatter + prompt body is the single source of truth; git history
 // of the .md files is therefore the version history of the deployed config.
+//
+// Installing a mode into SuperWhisper is TWO steps, both required (learned the
+// hard way): (1) write <key>.json into the modes dir, and (2) register <key> in
+// settings.json's `modeKeys`. A file that isn't registered lists on macOS but
+// can't activate, and doesn't appear at all on Windows.
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { loadAllModes, type Mode } from "./modes.ts";
-import { modesDir, moduleDir } from "./paths.ts";
-
-interface Example {
-  input: string;
-  output: string;
-}
-
-// promptExamples live in shared/examples.json keyed by mode key. Missing file
-// or key → no examples (valid). Schema per mode: array of { input, output }.
-function loadExamples(repoRoot: string): Record<string, Example[]> {
-  const path = join(repoRoot, "shared", "examples.json");
-  if (!existsSync(path)) return {};
-  const raw = JSON.parse(readFileSync(path, "utf8")) as Record<string, unknown>;
-  const out: Record<string, Example[]> = {};
-  for (const [key, val] of Object.entries(raw)) {
-    if (Array.isArray(val)) out[key] = val as Example[];
-  }
-  return out;
-}
+import { modesDir, moduleDir, settingsFile } from "./paths.ts";
 
 // Only models whose SuperWhisper id we've verified. Deploying an unknown id
 // would silently misconfigure the mode, so we fail loudly instead.
@@ -35,7 +22,7 @@ const MODEL_IDS: Record<string, string> = {
 };
 const VOICE_MODEL_ID = "nvidia_parakeet-v3_494MB";
 
-function toSuperwhisper(m: Mode, promptExamples: Example[]) {
+function toSuperwhisper(m: Mode) {
   const languageModelID = MODEL_IDS[m.deployModel];
   if (!languageModelID) {
     throw new Error(
@@ -60,7 +47,12 @@ function toSuperwhisper(m: Mode, promptExamples: Example[]) {
     literalPunctuation: false,
     name: m.name,
     prompt: m.prompt,
-    promptExamples,
+    // MUST stay empty. This SuperWhisper build (2.16.x) silently REJECTS a mode
+    // whose promptExamples is populated — the mode vanishes from the UI and gets
+    // stripped from modeKeys. The examples UI was removed and the field's real
+    // schema is unknown; shared/examples.json is kept as docs only. Verified via
+    // a controlled A/B probe (empty → works, populated {input,output} → rejected).
+    promptExamples: [],
     realtimeOutput: false,
     script: "",
     scriptEnabled: false,
@@ -72,23 +64,40 @@ function toSuperwhisper(m: Mode, promptExamples: Example[]) {
   };
 }
 
+// Register mode keys in SuperWhisper's settings.json so they actually activate.
+// Idempotent: adds only missing keys, preserves order/others, backs up first.
+function registerInSettings(modes: Mode[]) {
+  const file = settingsFile();
+  if (!existsSync(file)) {
+    console.log(`  ! settings.json not found at ${file} — skipped registration; modes won't activate until registered.`);
+    return;
+  }
+  const cfg = JSON.parse(readFileSync(file, "utf8")) as { modeKeys?: string[] };
+  writeFileSync(`${file}.bak-${Date.now()}`, JSON.stringify(cfg, null, 2) + "\n");
+  const keys = Array.isArray(cfg.modeKeys) ? cfg.modeKeys : [];
+  const added = modes.map((m) => m.key).filter((k) => !keys.includes(k));
+  cfg.modeKeys = [...keys, ...added];
+  writeFileSync(file, JSON.stringify(cfg, null, 2) + "\n");
+  console.log(`  registered ${added.length} new key(s) in modeKeys${added.length ? ": " + added.join(", ") : ""}`);
+}
+
 export function main() {
   const install = process.argv.includes("--install");
   const repoRoot = dirname(moduleDir(import.meta.url));
   const outDir = install ? modesDir() : join(repoRoot, "dist");
   mkdirSync(outDir, { recursive: true });
 
-  const examples = loadExamples(repoRoot);
   const modes = loadAllModes();
   for (const m of modes) {
-    const json = toSuperwhisper(m, examples[m.key] ?? []);
+    const json = toSuperwhisper(m);
     const path = join(outDir, `${m.key}.json`);
     writeFileSync(path, JSON.stringify(json, null, 2) + "\n");
     console.log(`  ${m.key.padEnd(18)} v${m.version}  ${m.deployModel.padEnd(12)} -> ${path}`);
   }
+  if (install) registerInSettings(modes);
   console.log(
     install
-      ? `\nInstalled ${modes.length} modes into SuperWhisper. Restart SuperWhisper to pick them up.`
+      ? `\nInstalled ${modes.length} modes into SuperWhisper. Fully quit + reopen SuperWhisper to pick them up.`
       : `\nWrote ${modes.length} modes to ./dist. Re-run with --install to deploy them into SuperWhisper.`,
   );
 }

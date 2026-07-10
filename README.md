@@ -46,9 +46,11 @@ bun run build:mac   # → dist/bin/dictation-macos
 bun run build:win   # → dist/bin/dictation-windows.exe
 ```
 
-The binary supports the portable field commands `harvest` and `export` (writing to the current directory); `sync` and `eval` need the repo checkout and stay `bun run` commands. Paths are cross-OS: SuperWhisper's data dir resolves on macOS and Windows (override with `SUPERWHISPER_DIR`); Linux errors clearly until SuperWhisper ships there.
+The binary supports the portable field commands `harvest` and `export` (writing to the current directory); `sync` and `eval` need the repo checkout and stay `bun run` commands. Paths are cross-OS: SuperWhisper's data dir resolves on macOS (`~/Documents/superwhisper`) and Windows (`%LOCALAPPDATA%\com.superwhisper.app`) — override with `SUPERWHISPER_DIR`; Linux errors clearly until SuperWhisper ships there.
 
-Optionally paste the pairs from `shared/examples.md` into each mode's **Examples** field in-app — it hardens injection-resistance and the language lock more than the prompt alone. (SuperWhisper's example-field schema isn't documented, so sync leaves `promptExamples` empty for you to add by hand.)
+`--install` does **two** things, both required: writes each `<key>.json` into the modes dir **and** registers each key in `settings.json`'s `modeKeys`. A dropped file that isn't registered lists on macOS but can't activate, and doesn't appear on Windows at all. Fully quit and reopen SuperWhisper afterward. (Tip: quit SuperWhisper *before* `--install` so it doesn't overwrite `settings.json` on its way out.)
+
+> **Examples are disabled.** SuperWhisper 2.16.x silently rejects a mode with a populated `promptExamples` (verified by A/B probe: empty → works, populated → the mode vanishes and gets stripped from `modeKeys`). The in-app examples editor is gone and the field's real schema is unknown, so sync always emits `promptExamples: []`. `shared/examples.json` / `.md` are kept as documentation for if the feature returns.
 
 ## Versioning — track how a prompt changes
 
