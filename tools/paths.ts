@@ -1,7 +1,8 @@
-// Cross-OS resolution of SuperWhisper's data directory.
-// SuperWhisper ships on macOS and Windows (Linux may come later). On both
-// current platforms it stores under ~/Documents/superwhisper. Override with
-// SUPERWHISPER_DIR for relocated Documents folders (e.g. OneDrive on Windows).
+// Cross-OS resolution of SuperWhisper's data directory (holds modes/ and
+// recordings/). The two platforms diverge:
+//   macOS:   ~/Documents/superwhisper           (relocatable in-app)
+//   Windows: %LOCALAPPDATA%\com.superwhisper.app (fixed — not yet relocatable)
+// Override with SUPERWHISPER_DIR for edge cases (e.g. a moved macOS folder).
 import { existsSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
@@ -10,8 +11,10 @@ import { fileURLToPath } from "node:url";
 export function superwhisperDir(): string {
   if (process.env.SUPERWHISPER_DIR) return process.env.SUPERWHISPER_DIR;
   const p = process.platform;
-  if (p === "darwin" || p === "win32") {
-    return join(homedir(), "Documents", "superwhisper");
+  if (p === "darwin") return join(homedir(), "Documents", "superwhisper");
+  if (p === "win32") {
+    const localAppData = process.env.LOCALAPPDATA ?? join(homedir(), "AppData", "Local");
+    return join(localAppData, "com.superwhisper.app");
   }
   throw new Error(
     `SuperWhisper is only on macOS and Windows — not "${p}". ` +

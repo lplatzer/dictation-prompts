@@ -6,7 +6,7 @@
 bun run trace/harvest.ts
 ```
 
-Aggregates SuperWhisper's own per-dictation records (`~/Documents/superwhisper/recordings/*/meta.json`) into `trace/traces.jsonl` — raw input, cleaned output, model, mode, timestamp, latency. Append-only, deduped, **gitignored** (real content — never commit).
+Aggregates SuperWhisper's own per-dictation records (`<superwhisper-dir>/recordings/*/meta.json` — macOS `~/Documents/superwhisper`, Windows `%LOCALAPPDATA%\com.superwhisper.app`) into `trace/traces.jsonl` — raw input, cleaned output, model, mode, timestamp, latency. Append-only, deduped, **gitignored** (real content — never commit).
 
 ## Export to a tracing/eval tool (OTLP)
 
