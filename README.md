@@ -50,7 +50,7 @@ The binary supports the portable field commands `harvest` and `export` (writing 
 
 `--install` does **two** things, both required: writes each `<key>.json` into the modes dir **and** registers each key in `settings.json`'s `modeKeys`. A dropped file that isn't registered lists on macOS but can't activate, and doesn't appear on Windows at all. Fully quit and reopen SuperWhisper afterward. (Tip: quit SuperWhisper *before* `--install` so it doesn't overwrite `settings.json` on its way out.)
 
-> **Examples are disabled.** SuperWhisper 2.16.x silently rejects a mode with a populated `promptExamples` (verified by A/B probe: empty → works, populated → the mode vanishes and gets stripped from `modeKeys`). The in-app examples editor is gone and the field's real schema is unknown, so sync always emits `promptExamples: []`. `shared/examples.json` / `.md` are kept as documentation for if the feature returns.
+> **Examples go inline in the prompt, not in the `promptExamples` field.** Populating `promptExamples` makes SuperWhisper 2.16.x silently reject the whole mode (verified by A/B probe, and confirmed by SuperWhisper support — the separate field is deprecated). The current supported way is examples embedded in the AI instructions as XML. So sync keeps `promptExamples: []` and renders the pairs from `shared/examples.json` into an `<examples>` block appended to each prompt at build time. Edit examples in `examples.json`; they flow into the deployed prompt automatically.
 
 ## Versioning — track how a prompt changes
 

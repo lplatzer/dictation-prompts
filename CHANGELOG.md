@@ -10,6 +10,8 @@ Human-readable "why" behind each prompt change. Git history is the "what" (line-
 
 ## Log
 
+- 2026-07-10 — examples restored inline — per SuperWhisper support, the separate `promptExamples` field is deprecated; examples now belong inline in the prompt as XML. sync renders `shared/examples.json` into an `<examples>` block appended to each prompt (keeping `promptExamples: []`). Restores the reinforcement layer via the supported path.
+
 - 2026-07-10 — tooling fix — root-caused why installed modes wouldn't activate. Two bugs: (1) `--install` only dropped JSON files but never registered keys in `settings.json`'s `modeKeys` (SuperWhisper's real mode registry — modes aren't in the sqlite DB); (2) a populated `promptExamples` array is silently rejected by SuperWhisper 2.16.x, stripping the whole mode. Fix: `sync --install` now also registers `modeKeys` (idempotent, backup, cross-OS), and always emits `promptExamples: []`. Confirmed by an A/B probe against the app-authored `custom.json`.
 
 - 2026-07-09 — coding v1, code-gen v1 — added a coding-cleanup mode (IDEs + terminals, preserves identifiers) and a spoken-description→code mode (the deliberate injection exception) — cover dictating to coding agents and generating code.
